@@ -3,6 +3,7 @@ namespace MediaWiki\Extension\JWTAuth\Models;
 
 use MediaWiki\Extension\JWTAuth\JWTAuth;
 use MediaWiki\Extension\JWTAuth\Models\JWTResponse;
+use MediaWiki\MediaWikiServices;
 use MediaWiki\Session\Session;
 use MediaWiki\User\UserGroupManager;
 use Psr\Log\LoggerInterface;
@@ -37,6 +38,13 @@ class ProposedUser {
             $logger->debug("$username does exist with an ID " . $proposedUser->getId());
             $proposedUser->mId = $proposedUser->getId();
             $proposedUser->loadFromId();
+			MediaWikiServices::getInstance()->getHookContainer()->run(
+				'JWTAuthUserFound',
+				[
+					$proposedUser,
+					$jwtResponse
+				]
+			);
         } else {
             // TODO: use autoCreateUser in https://gerrit.wikimedia.org/g/mediawiki/core/+/64c6ce7b95188ad381ee947b726fadde6aafe1c1/includes/auth/AuthManager.php
             $logger->debug("$username does not exist; attempting to creating user");
@@ -50,6 +58,13 @@ class ProposedUser {
             $proposedUser->mEmailAuthenticated = $now;
             $proposedUser->mTouched = $now;
             $proposedUser->addToDatabase();
+			MediaWikiServices::getInstance()->getHookContainer()->run(
+				'JWTAuthUserCreated',
+				[
+					$proposedUser,
+					$jwtResponse
+				]
+			);
         }
 
         $groupsToBeAdded = $jwtResponse->getGroups();
@@ -85,4 +100,8 @@ class ProposedUser {
         $this->logger->debug("Set user in global session.");
         $this->logger->debug("The user in global session is now: " . print_r($globalSession->getUser(), true));
     }
+
+	public function getProposedUser() : User {
+		return $this->proposedUser;
+	}
 }

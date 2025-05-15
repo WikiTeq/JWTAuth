@@ -70,10 +70,10 @@ class JWTLogin extends UnlistedSpecialPage {
     public function execute($subpage) {
         // No errors yet
         $error = '';
-    
+
         // First, need to get the WebRequest from the WebContext
         $request = $this->getContext()->getRequest();
-    
+
         // Get JWT data from Authorization header or POST data
         if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
             $jwtDataRaw = $_SERVER['HTTP_AUTHORIZATION'];
@@ -81,20 +81,20 @@ class JWTLogin extends UnlistedSpecialPage {
             $jwtDataRaw = $_POST[self::JWT_PARAMETER];
         } else {
             $jwtDataRaw = '';
-        }     
+        }
 
         // Clean data
         $cleanJWTData = $this->jwtHandler->preprocessRawJWTData($jwtDataRaw);
-    
+
         if (empty($cleanJWTData)) {
             // Invalid, no JWT
             $this->getOutput()->addWikiMsg('jwtauth-invalid');
             return;
         }
-    
+
         // Process JWT and get results back
         $jwtResults = $this->jwtHandler->processJWT($cleanJWTData);
-    
+
         if (is_string($jwtResults)) {
             // Invalid results
             $this->logger->debug("Unable to process JWT. The error message was: $jwtResults");
@@ -102,7 +102,7 @@ class JWTLogin extends UnlistedSpecialPage {
         } else {
             $jwtResponse = $jwtResults;
         }
-        
+
         if (empty($error)) {
             $proposedUser = ProposedUser::makeUserFromJWTResponse(
                 $jwtResponse,
@@ -126,6 +126,14 @@ class JWTLogin extends UnlistedSpecialPage {
                 'label' => "Sorry, we couldn't log you in at this time. Please inform the site administrators of the following error: $error",
             ]));
         } else {
+
+			MediaWikiServices::getInstance()->getHookContainer()->run(
+				'JWTAuthCompleted',
+				[
+					$proposedUser->getProposedUser(),
+					$jwtResponse
+				]
+			);
 
             $requestedReturnToPage = $this->getRequestParameter(self::RETURN_TO_PAGE_PARAMETER);
             $returnToUrl = null;

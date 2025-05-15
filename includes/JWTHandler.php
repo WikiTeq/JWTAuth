@@ -56,10 +56,10 @@ class JWTHandler {
         // Remove any white space characters from the $rawJWTData string and output as $cleanJWTData.
         $rawJWTData = str_replace(['Bearer:', 'Bearer '], '', $rawJWTData);
         $cleanJWTData = preg_replace('/\s+/', '', $rawJWTData);
-    
+
         return $cleanJWTData;
     }
-    
+
     /**
      * Processes the JWT token and returns a JWTResponse object or an error message.
      *
@@ -113,7 +113,8 @@ class JWTHandler {
                             ->setIssuer($stagingArea[JWTAuth::CLAIM_NAMES['issuer']])
                             ->setAudience($stagingArea[JWTAuth::CLAIM_NAMES['audience']])
                             ->setSubject($stagingArea[JWTAuth::CLAIM_NAMES['subject']])
-                            ->setGroups($stagingArea[$this->jwtSettings->getGroupsClaimName()]);
+                            ->setGroups($stagingArea[$this->jwtSettings->getGroupsClaimName()])
+							->setAttributes( $decodedJWT );
 
         return $jwtResponse;
     }

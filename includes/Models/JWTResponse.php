@@ -14,6 +14,7 @@ class JWTResponse {
     private string $subject;
     private array $groups;
     private array $groupsToRemove;
+	private array $attributes;
 
     private function __construct() {}
 
@@ -79,6 +80,10 @@ class JWTResponse {
         return $this->groupsToRemove;
     }
 
+	public function getAttributes() {
+		return $this->attributes;
+	}
+
     public function setUsername(string $username): JWTResponse {
         $this->username = ucfirst($username);
         return $this;
@@ -121,6 +126,11 @@ class JWTResponse {
         $this->externalUserID = $externalUserID;
         return $this;
     }
+
+	public function setAttributes( array $attributes ): JWTResponse {
+		$this->attributes = $attributes;
+		return $this;
+	}
 
     public function setGroups(string $commaSeparatedGroups): JWTResponse {
         if (empty($commaSeparatedGroups)) {
