@@ -32,9 +32,20 @@ class ProposedUser {
         $email = $jwtResponse->getEmailAddress();
         $realname = $jwtResponse->getFullName();
 
-        $proposedUser = User::newFromName($username, 'usable');
+		$proposedUser = User::newFromName( $username, 'usable' );
 
-        if ($proposedUser !== false && $proposedUser->getId() != 0) {
+		// Allow 3rd parties to alter the proposed user
+		$logger->debug("Offering extensions to override proposed user.");
+		MediaWikiServices::getInstance()->getHookContainer()->run(
+			'JWTAuthProposeUser',
+			[
+				&$proposedUser,
+				$jwtResponse
+			]
+		);
+
+		// If either some extension found a user for us
+        if ( $proposedUser !== false && $proposedUser->getId() != 0 ) {
             $logger->debug("$username does exist with an ID " . $proposedUser->getId());
             $proposedUser->mId = $proposedUser->getId();
             $proposedUser->loadFromId();
