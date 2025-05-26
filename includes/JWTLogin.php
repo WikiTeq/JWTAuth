@@ -80,12 +80,12 @@ class JWTLogin extends UnlistedSpecialPage {
         } elseif (isset($_POST[self::JWT_PARAMETER])) {
             $jwtDataRaw = $_POST[self::JWT_PARAMETER];
         } else {
-            $jwtDataRaw = '';
+        $jwtDataRaw = '';
         }
 
-		if ( $this->getConfig()->get( 'JWTDebugLogEnabled' ) ) {
-			$this->logger->debug("JWT raw data: $jwtDataRaw");
-		}
+        if ( $this->getConfig()->get( 'JWTDebugLogEnabled' ) ) {
+            $this->logger->debug("JWT raw data: $jwtDataRaw");
+        }
 
         // Clean data
         $cleanJWTData = $this->jwtHandler->preprocessRawJWTData($jwtDataRaw);
