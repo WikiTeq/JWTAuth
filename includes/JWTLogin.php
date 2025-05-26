@@ -80,7 +80,7 @@ class JWTLogin extends UnlistedSpecialPage {
         } elseif (isset($_POST[self::JWT_PARAMETER])) {
             $jwtDataRaw = $_POST[self::JWT_PARAMETER];
         } else {
-        $jwtDataRaw = '';
+            $jwtDataRaw = '';
         }
 
         if ( $this->getConfig()->get( 'JWTDebugLogEnabled' ) ) {
