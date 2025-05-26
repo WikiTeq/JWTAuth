@@ -59,9 +59,9 @@
         "JWTGroupsClaimName": {
             "value": "groups"
         },
-	    "JWTDebugLogEnabled": {
-		    "value": false,
-		    "description": "Whenever to enable verbose logging of sensitive information"
+        "JWTDebugLogEnabled": {
+            "value": false,
+            "description": "Whenever to enable verbose logging of sensitive information"
         }
     },
     "load_composer_autoloader": true
