@@ -255,7 +255,7 @@ class JWTHandler {
         // Check if all required claims are there
         foreach (JWTAuth::EXTENSION_REQUIRED_CLAIMS as $claimName) {
             if (empty($decodedJWT[$claimName])) {
-                $this->logger->error("JWT validation failed: Missing always-required claim '$claimName'. Authentication halted.");
+                $this->logger->error("JWT validation failed: Missing always-required claim '$claimName'. Authentication halted." . PHP_EOL);
                 return false;
             }
         }
@@ -263,7 +263,7 @@ class JWTHandler {
         $requiredClaims = $this->jwtSettings->getRequiredClaims();
         foreach ($requiredClaims as $claimName) {
             if (empty($decodedJWT[$claimName])) {
-                $this->logger->error("JWT validation failed: Missing site-required claim '$claimName'. Authentication halted.");
+                $this->logger->error("JWT validation failed: Missing site-required claim '$claimName'. Authentication halted." . PHP_EOL);
                 return false;
             }
         }
