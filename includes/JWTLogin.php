@@ -68,6 +68,11 @@ class JWTLogin extends UnlistedSpecialPage {
     }
 
     public function execute($subpage) {
+        $clientIP = $this->getRequest()->getIP();
+        $userAgent = $this->getRequest()->getHeader('User-Agent');
+
+        $this->logger->info("JWT Authentication attempt from IP: $clientIP, User-Agent: $userAgent");
+
         // No errors yet
         $error = '';
 
@@ -77,10 +82,13 @@ class JWTLogin extends UnlistedSpecialPage {
         // Get JWT data from Authorization header or POST data
         if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
             $jwtDataRaw = $_SERVER['HTTP_AUTHORIZATION'];
+            $this->logger->debug("JWT received from HTTP_AUTHORIZATION header");
         } elseif (isset($_POST[self::JWT_PARAMETER])) {
             $jwtDataRaw = $_POST[self::JWT_PARAMETER];
+            $this->logger->debug("JWT received from POST parameter");
         } else {
             $jwtDataRaw = '';
+            $this->logger->error("JWT Authentication failed: No JWT token found in Authorization header or POST data");
         }
 
         if ( $this->getConfig()->get( 'JWTDebugLogEnabled' ) ) {
@@ -92,22 +100,28 @@ class JWTLogin extends UnlistedSpecialPage {
 
         if (empty($cleanJWTData)) {
             // Invalid, no JWT
+            $this->logger->error("JWT Authentication failed: Unable to preprocess JWT data. Halting authentication flow.");
             $this->getOutput()->addWikiMsg('jwtauth-invalid');
             return;
         }
+
+        $this->logger->debug("Starting JWT processing for authentication");
 
         // Process JWT and get results back
         $jwtResults = $this->jwtHandler->processJWT($cleanJWTData);
 
         if (is_string($jwtResults)) {
             // Invalid results
-            $this->logger->debug("Unable to process JWT. The error message was: $jwtResults");
+            $this->logger->error("JWT Authentication failed during processing: $jwtResults. Halting authentication flow.");
             $error = $jwtResults;
         } else {
             $jwtResponse = $jwtResults;
+            $this->logger->info("JWT Authentication successful for user: " . $jwtResponse->getUsername());
         }
 
         if (empty($error)) {
+            $this->logger->debug("Proceeding with user creation/login for: " . $jwtResponse->getUsername());
+
             $proposedUser = ProposedUser::makeUserFromJWTResponse(
                 $jwtResponse,
                 $this->userGroupManager,
@@ -116,6 +130,10 @@ class JWTLogin extends UnlistedSpecialPage {
 
             $globalSession = $this->getRequest()->getSession();
             $proposedUser->setUserInSession($globalSession);
+
+            $this->logger->info("JWT Authentication successful from IP: $clientIP for user: " . $proposedUser->getProposedUser()->getName());
+        } else {
+            $this->logger->critical("JWT Authentication completely failed. No user login will be processed. Error: $error");
         }
 
         if ($this->debugMode === true) {
@@ -129,6 +147,7 @@ class JWTLogin extends UnlistedSpecialPage {
                 'type' => 'error',
                 'label' => "Sorry, we couldn't log you in at this time. Please inform the site administrators of the following error: $error",
             ]));
+            $this->logger->warning("JWT Authentication failed from IP: $clientIP. Error: $error");
         } else {
 
 			MediaWikiServices::getInstance()->getHookContainer()->run(

@@ -49,7 +49,7 @@ class JWTHandler {
         // Checks if the $rawJWTData string starts with the literal strings "Bearer:" or "Bearer ".
         // If it doesn't start with either, it logs an error message and returns an empty string.
         if (strpos($rawJWTData, 'Bearer:') !== 0 && strpos($rawJWTData, 'Bearer ') !== 0) {
-            $this->logger->debug("Invalid JWT auth, doesn't start with Bearer");
+            $this->logger->error("JWT Authentication failed: Invalid Bearer format. Raw data does not start with 'Bearer:' or 'Bearer '");
             return '';
         }
         // Extract the JWT substring after the first 7 characters, which removes the "Bearer:" or "Bearer " prefix.
@@ -57,6 +57,12 @@ class JWTHandler {
         $rawJWTData = str_replace(['Bearer:', 'Bearer '], '', $rawJWTData);
         $cleanJWTData = preg_replace('/\s+/', '', $rawJWTData);
 
+        if (empty($cleanJWTData)) {
+            $this->logger->error("JWT Authentication failed: Empty JWT token after preprocessing");
+            return '';
+        }
+
+        $this->logger->debug("JWT preprocessing successful");
         return $cleanJWTData;
     }
 
@@ -233,14 +239,23 @@ class JWTHandler {
     private function isDecodedJWTValid(
         array $decodedJWT
     ): bool {
-        if ($decodedJWT === null) return false;
-        if (empty($decodedJWT)) return false;
-        if (!is_array($decodedJWT)) return false;
+        if ($decodedJWT === null) {
+            $this->logger->error("JWT validation failed: Decoded JWT is null");
+            return false;
+        }
+        if (empty($decodedJWT)) {
+            $this->logger->error("JWT validation failed: Decoded JWT is empty");
+            return false;
+        }
+        if (!is_array($decodedJWT)) {
+            $this->logger->error("JWT validation failed: Decoded JWT is not an array");
+            return false;
+        }
 
         // Check if all required claims are there
         foreach (JWTAuth::EXTENSION_REQUIRED_CLAIMS as $claimName) {
             if (empty($decodedJWT[$claimName])) {
-                $this->logger->debug('JWT is missing always-required claim: ' . $claimName . PHP_EOL);
+                $this->logger->error("JWT validation failed: Missing always-required claim '$claimName'. Authentication halted.");
                 return false;
             }
         }
@@ -248,11 +263,12 @@ class JWTHandler {
         $requiredClaims = $this->jwtSettings->getRequiredClaims();
         foreach ($requiredClaims as $claimName) {
             if (empty($decodedJWT[$claimName])) {
-                $this->logger->debug('JWT is missing site-required claim: ' . $claimName . PHP_EOL);
+                $this->logger->error("JWT validation failed: Missing site-required claim '$claimName'. Authentication halted.");
                 return false;
             }
         }
 
+        $this->logger->debug("JWT validation successful: All required claims present");
         return true;
     }
 }
