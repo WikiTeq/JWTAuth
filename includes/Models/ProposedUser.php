@@ -33,6 +33,7 @@ class ProposedUser {
         $realname = $jwtResponse->getFullName();
 
 		$proposedUser = User::newFromName( $username, 'usable' );
+		$logger->debug("Default user proposal is " . $proposedUser->getName());
 
 		// Allow 3rd parties to alter the proposed user
 		$logger->debug("Offering extensions to override proposed user.");
@@ -43,6 +44,7 @@ class ProposedUser {
 				$jwtResponse
 			]
 		);
+		$logger->debug("Proposed user after extension hook is " . $proposedUser->getName());
 
 		// If either some extension found a user for us
         if ( $proposedUser !== false && $proposedUser->getId() != 0 ) {

@@ -83,6 +83,10 @@ class JWTLogin extends UnlistedSpecialPage {
             $jwtDataRaw = '';
         }
 
+        if ( $this->getConfig()->get( 'JWTDebugLogEnabled' ) ) {
+            $this->logger->debug("JWT raw data: $jwtDataRaw");
+        }
+
         // Clean data
         $cleanJWTData = $this->jwtHandler->preprocessRawJWTData($jwtDataRaw);
 
