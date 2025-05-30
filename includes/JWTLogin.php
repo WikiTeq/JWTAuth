@@ -167,6 +167,13 @@ class JWTLogin extends UnlistedSpecialPage {
             if ($returnToUrl === null || strlen($returnToUrl) === 0) {
                 $returnToUrl = Title::newMainPage()->getFullURLForRedirect();
             }
+            MediaWikiServices::getInstance()->getHookContainer()->run(
+                'JWTAuthCompletedRedirect',
+                [
+                    &$returnToUrl,
+                    $this->getRequest()
+                ]
+            );
             $this->getOutput()->redirect($returnToUrl);
         }
     }
